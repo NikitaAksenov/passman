@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 
@@ -10,20 +9,17 @@ import (
 )
 
 func main() {
-	// Handle commands
 	if len(os.Args) < 2 {
 		fmt.Println("No command was passed")
 		return
 	}
 
-	db, err := sql.Open("sqlite3", "passwords.db")
+	app, err := app.NewApplication()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	defer db.Close()
-
-	app := app.NewApplication(db)
+	defer app.Close()
 
 	command := os.Args[1]
 

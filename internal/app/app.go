@@ -4,16 +4,29 @@ import (
 	"database/sql"
 
 	"github.com/NikitaAksenov/passman/internal/models"
+
+	_ "github.com/mattn/go-sqlite3"
 )
+
+var DBPath = "D:/Programs/passman/passwords.db"
 
 type application struct {
 	passwords *models.PasswordModel
 }
 
-func NewApplication(db *sql.DB) *application {
+func NewApplication() (*application, error) {
+	db, err := sql.Open("sqlite3", DBPath)
+	if err != nil {
+		return nil, err
+	}
+
 	app := application{passwords: &models.PasswordModel{DB: db}}
 
-	return &app
+	return &app, nil
+}
+
+func (app *application) Close() {
+	app.passwords.DB.Close()
 }
 
 func (app *application) Add(title, value string) error {
