@@ -63,7 +63,7 @@ func (s *SqliteStorage) AddPass(target string, pass string) (int64, error) {
 func (s *SqliteStorage) GetPass(target string) (string, error) {
 	stmt, err := s.db.Prepare("SELECT pass FROM pass WHERE target = ?")
 	if err != nil {
-		return "", fmt.Errorf("%w", err)
+		return "", err
 	}
 
 	var resultPass string
@@ -74,7 +74,7 @@ func (s *SqliteStorage) GetPass(target string) (string, error) {
 			return "", storage.ErrTargetNotFound
 		}
 
-		return "", fmt.Errorf("%w", err)
+		return "", err
 	}
 
 	return resultPass, nil
@@ -105,4 +105,23 @@ func (s *SqliteStorage) GetTargets(limit int, offset int) ([]string, error) {
 	}
 
 	return targets, nil
+}
+
+func (s *SqliteStorage) DeleteTarget(target string) (int64, error) {
+	stmt, err := s.db.Prepare("DELETE FROM pass WHERE target = ?")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := stmt.Exec(target)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return rowsAffected, nil
 }
