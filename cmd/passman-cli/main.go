@@ -13,6 +13,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/NikitaAksenov/passman/internal/encrypt"
+	"github.com/NikitaAksenov/passman/internal/storage"
 	"github.com/NikitaAksenov/passman/internal/storage/sqlite"
 )
 
@@ -51,7 +52,8 @@ func main() {
 	// fmt.Println("storagePath:", storagePath)
 
 	// - Init storage
-	storage, err := sqlite.New(storagePath)
+	var storage storage.Storage
+	storage, err = sqlite.New(storagePath)
 	if err != nil {
 		log.Fatalf("failed to init storage: %s", err)
 	}

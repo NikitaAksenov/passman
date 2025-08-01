@@ -9,11 +9,11 @@ import (
 	"github.com/mattn/go-sqlite3"
 )
 
-type Storage struct {
+type SqliteStorage struct {
 	db *sql.DB
 }
 
-func New(storagePath string) (*Storage, error) {
+func New(storagePath string) (*SqliteStorage, error) {
 	db, err := sql.Open("sqlite3", storagePath)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
@@ -34,10 +34,10 @@ func New(storagePath string) (*Storage, error) {
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return &Storage{db: db}, nil
+	return &SqliteStorage{db: db}, nil
 }
 
-func (s *Storage) AddPass(target string, pass string) (int64, error) {
+func (s *SqliteStorage) AddPass(target string, pass string) (int64, error) {
 	stmt, err := s.db.Prepare("INSERT INTO pass(target, pass) VALUES (?, ?)")
 	if err != nil {
 		return 0, fmt.Errorf("%w", err)
@@ -60,7 +60,7 @@ func (s *Storage) AddPass(target string, pass string) (int64, error) {
 	return id, nil
 }
 
-func (s *Storage) GetPass(target string) (string, error) {
+func (s *SqliteStorage) GetPass(target string) (string, error) {
 	stmt, err := s.db.Prepare("SELECT pass FROM pass WHERE target = ?")
 	if err != nil {
 		return "", fmt.Errorf("%w", err)
@@ -80,7 +80,7 @@ func (s *Storage) GetPass(target string) (string, error) {
 	return resultPass, nil
 }
 
-func (s *Storage) GetTargets(limit int, offset int) ([]string, error) {
+func (s *SqliteStorage) GetTargets(limit int, offset int) ([]string, error) {
 	stmt, err := s.db.Prepare("SELECT target FROM pass DESC LIMIT ? OFFSET ?")
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
