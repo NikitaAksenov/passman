@@ -1,15 +1,16 @@
-package main
+package commands
 
 import (
 	"fmt"
 	"syscall"
 
+	"github.com/NikitaAksenov/passman/cmd/passman-cli/app"
 	"github.com/NikitaAksenov/passman/internal/encrypt"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 
-func GetCommand(app *App) *cobra.Command {
+func GetCommand(app *app.App) *cobra.Command {
 	command := cobra.Command{
 		Use:   "get [target]",
 		Short: "Returns [target]'s password",

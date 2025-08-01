@@ -1,15 +1,16 @@
-package main
+package commands
 
 import (
 	"fmt"
 	"syscall"
 
+	"github.com/NikitaAksenov/passman/cmd/passman-cli/app"
 	"github.com/NikitaAksenov/passman/internal/encrypt"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 
-func AddCommand(app *App) *cobra.Command {
+func AddCommand(app *app.App) *cobra.Command {
 	command := cobra.Command{
 		Use:   "add [target]",
 		Short: "Adds new target and it's password",
