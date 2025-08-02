@@ -18,6 +18,12 @@ func AddCommand(app *app.App) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			target := args[0]
 
+			norepeat, err := cmd.Flags().GetBool("norepeat")
+			if err != nil {
+				fmt.Println("failed to get \"norepeat\" value")
+				return
+			}
+
 			// Read password silently
 			fmt.Print("Enter password: ")
 			bytePass, err := term.ReadPassword(int(syscall.Stdin))
@@ -37,6 +43,11 @@ func AddCommand(app *app.App) *cobra.Command {
 					return
 				}
 				fmt.Println()
+
+				// If norepeat flag is set then don't prompt to enter key again
+				if norepeat {
+					break
+				}
 
 				fmt.Print("Enter key again: ")
 				keyRepeat, err = term.ReadPassword(int(syscall.Stdin))
@@ -71,6 +82,8 @@ func AddCommand(app *app.App) *cobra.Command {
 			}
 		},
 	}
+
+	command.Flags().BoolP("norepeat", "n", false, "if set then user won't be prompt to enter key twice")
 
 	return &command
 }
