@@ -47,7 +47,7 @@ func New() (*App, error) {
 	var storage storage.Storage
 	storage, err = sqlite.New(storagePath)
 	if err != nil {
-		return nil, fmt.Errorf("ailed to init storage: %s", err.Error())
+		return nil, fmt.Errorf("failed to init storage: %s", err.Error())
 	}
 
 	return &App{
