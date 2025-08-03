@@ -10,6 +10,8 @@ import (
 	"github.com/NikitaAksenov/passman/internal/storage/sqlite"
 )
 
+var appConfiguration = "dev"
+
 const (
 	appName     = "passman"
 	storageDir  = "storage"
@@ -21,21 +23,18 @@ type App struct {
 }
 
 func New() (*App, error) {
-	// - Check app directories and create them if needed
-	// -- Get user config dir
-	userConfigDir, err := os.UserConfigDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user config dir")
+	switch appConfiguration {
+	case "dev":
+		fmt.Println("dev configuration")
 	}
 
-	// -- Check and create app dir
-	appDir := filepath.Join(userConfigDir, appName)
-	err = directory.CheckAndCreateDir(appDir)
+	// Check and create app dir
+	appDir, err := GetAppDir(appConfiguration)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check app dir: %s", err.Error())
+		return nil, fmt.Errorf("failed to get app dir: %s", err.Error())
 	}
 
-	// -- Check and create storage dir
+	// Check and create storage dir
 	storageDir := filepath.Join(appDir, storageDir)
 	err = directory.CheckAndCreateDir(storageDir)
 	if err != nil {
@@ -43,7 +42,7 @@ func New() (*App, error) {
 	}
 	storagePath := filepath.Join(storageDir, storageName)
 
-	// - Init storage
+	// Init storage
 	var storage storage.Storage
 	storage, err = sqlite.New(storagePath)
 	if err != nil {
@@ -53,4 +52,26 @@ func New() (*App, error) {
 	return &App{
 		Storage: storage,
 	}, nil
+}
+
+func GetAppDir(configuration string) (string, error) {
+	switch configuration {
+	case "dev":
+		return "./", nil
+	case "prod":
+		userConfigDir, err := os.UserConfigDir()
+		if err != nil {
+			return "", fmt.Errorf("failed to get user config dir")
+		}
+
+		appDir := filepath.Join(userConfigDir, appName)
+		err = directory.CheckAndCreateDir(appDir)
+		if err != nil {
+			return "", fmt.Errorf("failed to check app dir: %s", err.Error())
+		}
+
+		return appDir, nil
+	default:
+		return "", fmt.Errorf("unknown configuration %s", configuration)
+	}
 }
