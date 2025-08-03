@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
+	"github.com/NikitaAksenov/passgen/pkg/passgen"
 	"github.com/NikitaAksenov/passman/cmd/passman-cli/app"
 	"github.com/NikitaAksenov/passman/internal/encrypt"
 	"github.com/spf13/cobra"
@@ -24,14 +25,31 @@ func AddCommand(app *app.App) *cobra.Command {
 				return
 			}
 
-			// Read password silently
-			fmt.Print("Enter password: ")
-			bytePass, err := term.ReadPassword(int(syscall.Stdin))
+			generate, err := cmd.Flags().GetBool("generate")
 			if err != nil {
-				fmt.Printf("error during reading password: %s", err.Error())
+				fmt.Println("failed to get \"generate\" value")
 				return
 			}
-			fmt.Println()
+
+			var password string
+			if generate {
+				// Generate password
+				password, err = passgen.Generate(10)
+				if err != nil {
+					fmt.Printf("failed to generate password: %s", err.Error())
+					return
+				}
+			} else {
+				// Read password silently
+				fmt.Print("Enter password: ")
+				bytePass, err := term.ReadPassword(int(syscall.Stdin))
+				if err != nil {
+					fmt.Printf("failed to read password: %s", err.Error())
+					return
+				}
+				fmt.Println()
+				password = string(bytePass)
+			}
 
 			// Read key silently
 			var key, keyRepeat []byte
@@ -68,13 +86,13 @@ func AddCommand(app *app.App) *cobra.Command {
 			resizedKey := encrypt.ResizeKey(key)
 
 			// Encrypt password
-			encryptedPass, err := encrypt.EncryptString(resizedKey, string(bytePass))
+			encryptedPass, err := encrypt.EncryptString(resizedKey, password)
 			if err != nil {
 				fmt.Printf("encryption failed: %s", err.Error())
 				return
 			}
 
-			// -- Add encrypted password to storage
+			// Add encrypted password to storage
 			_, err = app.Storage.AddPass(target, encryptedPass)
 			if err != nil {
 				fmt.Printf("adding to storage failed: %s", err.Error())
@@ -84,6 +102,7 @@ func AddCommand(app *app.App) *cobra.Command {
 	}
 
 	command.Flags().BoolP("norepeat", "n", false, "if set then user won't be prompt to enter key twice")
+	command.Flags().BoolP("generate", "g", false, "if set then password will be generated automatically")
 
 	return &command
 }
