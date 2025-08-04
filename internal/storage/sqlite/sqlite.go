@@ -70,20 +70,63 @@ func (s *SqliteStorage) AddPass(target string, pass string) (int64, error) {
 }
 
 func (s *SqliteStorage) GetPass(target string) (string, error) {
-	stmt, err := s.db.Prepare("SELECT pass FROM pass WHERE target = ?")
+	// Begin transaction
+	// Need this because we take note of when last read has happend,
+	// so there will be UPDATE command after SELECT
+	tx, err := s.db.Begin()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to begin transaction: %s", err.Error())
 	}
+	defer tx.Rollback()
 
 	var resultPass string
 
-	err = stmt.QueryRow(target).Scan(&resultPass)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", storage.ErrTargetNotFound
+	// Read entry with provided target
+	{
+		selectStmt, err := s.db.Prepare("SELECT pass FROM pass WHERE target = ?")
+		if err != nil {
+			return "", fmt.Errorf("failed to execute selectStmt: %s", err)
 		}
 
-		return "", err
+		err = selectStmt.QueryRow(target).Scan(&resultPass)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return "", storage.ErrTargetNotFound
+			}
+
+			return "", err
+		}
+	}
+
+	// Update lastRead column
+	{
+		lastRead, err := PrepareTime(time.Now().UTC())
+		if err != nil {
+			return "", fmt.Errorf("failed to prepare time: %w", err)
+		}
+
+		lastReadStmt, err := s.db.Prepare("UPDATE pass SET lastRead = ? WHERE target = ?")
+		if err != nil {
+			return "", fmt.Errorf("failed to prepare lastReadStmt: %w", err)
+		}
+
+		res, err := lastReadStmt.Exec(lastRead, target)
+		if err != nil {
+			return "", fmt.Errorf("failed to execute lastReadStmt: %w", err)
+		}
+
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return "", fmt.Errorf("failed to get lastRead's rowsAffected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return "", fmt.Errorf("no rows were affected during lastRead update")
+		}
+
+		if err = tx.Commit(); err != nil {
+			return "", fmt.Errorf("failed to commit transaction: %w", err)
+		}
 	}
 
 	return resultPass, nil
