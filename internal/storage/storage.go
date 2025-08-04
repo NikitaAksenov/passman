@@ -1,6 +1,9 @@
 package storage
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrEmptyTarget    = errors.New("target is empty")
@@ -15,4 +18,17 @@ type Storage interface {
 	GetTargets(limit int, offset int) ([]string, error)
 	DeleteTarget(target string) (int64, error)
 	UpdatePassword(target string, pass string) (int64, error)
+	GetTargetInfo(target string) (*TargetInfo, error)
+}
+
+type TargetInfo struct {
+	Target      string
+	Created     string
+	LastUpdated string
+	LastRead    string
+}
+
+func (info TargetInfo) String() string {
+	return fmt.Sprintf("Target:      %s\nCreated:     %s\nLastUpdated: %s\nLastRead:    %s",
+		info.Target, info.Created, info.LastUpdated, info.LastRead)
 }

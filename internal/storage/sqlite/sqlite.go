@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/NikitaAksenov/passman/internal/storage"
 	"github.com/mattn/go-sqlite3"
@@ -23,7 +24,10 @@ func New(storagePath string) (*SqliteStorage, error) {
 	CREATE TABLE IF NOT EXISTS pass(
 		id INTEGER PRIMARY KEY,
 		target TEXT NOT NULL UNIQUE,
-		pass TEXT NOT NULL);
+		pass TEXT NOT NULL,
+		created TEXT NOT NULL,
+		lastUpdate TEXT,
+		lastRead TEXT);
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
@@ -38,12 +42,17 @@ func New(storagePath string) (*SqliteStorage, error) {
 }
 
 func (s *SqliteStorage) AddPass(target string, pass string) (int64, error) {
-	stmt, err := s.db.Prepare("INSERT INTO pass(target, pass) VALUES (?, ?)")
+	stmt, err := s.db.Prepare("INSERT INTO pass(target, pass, created) VALUES (?, ?, ?)")
 	if err != nil {
 		return 0, fmt.Errorf("%w", err)
 	}
 
-	res, err := stmt.Exec(target, pass)
+	created, err := PrepareTime(time.Now().UTC())
+	if err != nil {
+		return 0, fmt.Errorf("failed to prepare time: %s", err)
+	}
+
+	res, err := stmt.Exec(target, pass, created)
 	if err != nil {
 		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
 			return 0, fmt.Errorf("%w", storage.ErrTargetExist)
@@ -135,12 +144,17 @@ func (s *SqliteStorage) UpdatePassword(target string, pass string) (int64, error
 		return 0, storage.ErrEmptyPassword
 	}
 
-	stmt, err := s.db.Prepare("UPDATE pass SET pass = ? WHERE target = ?")
+	lastUpdate, err := PrepareTime(time.Now().UTC())
+	if err != nil {
+		return 0, fmt.Errorf("failed to prepare time: %s", err)
+	}
+
+	stmt, err := s.db.Prepare("UPDATE pass SET pass = ?, lastUpdate = ? WHERE target = ?")
 	if err != nil {
 		return 0, err
 	}
 
-	res, err := stmt.Exec(pass, target)
+	res, err := stmt.Exec(pass, lastUpdate, target)
 	if err != nil {
 		return 0, err
 	}
@@ -151,4 +165,38 @@ func (s *SqliteStorage) UpdatePassword(target string, pass string) (int64, error
 	}
 
 	return rowsAffected, nil
+}
+
+func (s *SqliteStorage) GetTargetInfo(target string) (*storage.TargetInfo, error) {
+	if target == "" {
+		return nil, storage.ErrEmptyTarget
+	}
+
+	stmt, err := s.db.Prepare("SELECT created, lastUpdate, lastRead FROM pass WHERE target = ?")
+	if err != nil {
+		return nil, err
+	}
+
+	var created string
+	var lastUpdated, lastRead sql.NullString
+
+	err = stmt.QueryRow(target).Scan(&created, &lastUpdated, &lastRead)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storage.ErrTargetNotFound
+		}
+
+		return nil, err
+	}
+
+	return &storage.TargetInfo{
+		Target:      target,
+		Created:     created,
+		LastUpdated: lastUpdated.String,
+		LastRead:    lastRead.String,
+	}, nil
+}
+
+func PrepareTime(t time.Time) (string, error) {
+	return t.Format(time.RFC822), nil
 }
