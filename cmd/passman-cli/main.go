@@ -30,6 +30,7 @@ func main() {
 	rootCmd.AddCommand(commands.GetCommand(App))
 	rootCmd.AddCommand(commands.ListCommand(App))
 	rootCmd.AddCommand(commands.DeleteCommand(App))
+	rootCmd.AddCommand(commands.UpdateCommand(App))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

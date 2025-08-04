@@ -125,3 +125,30 @@ func (s *SqliteStorage) DeleteTarget(target string) (int64, error) {
 
 	return rowsAffected, nil
 }
+
+func (s *SqliteStorage) UpdatePassword(target string, pass string) (int64, error) {
+	if target == "" {
+		return 0, storage.ErrEmptyTarget
+	}
+
+	if pass == "" {
+		return 0, storage.ErrEmptyPassword
+	}
+
+	stmt, err := s.db.Prepare("UPDATE pass SET pass = ? WHERE target = ?")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := stmt.Exec(pass, target)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
+}
