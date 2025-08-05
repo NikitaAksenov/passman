@@ -9,9 +9,10 @@ import (
 
 func DeleteCommand(app *app.App) *cobra.Command {
 	command := cobra.Command{
-		Use:   "delete target",
-		Short: "Deletes entry for provided target",
-		Args:  cobra.ExactArgs(1),
+		Use:     "delete target",
+		Short:   "Deletes entry for provided target",
+		Aliases: []string{"del"},
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			target := args[0]
 
