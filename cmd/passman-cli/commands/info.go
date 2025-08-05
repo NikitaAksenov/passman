@@ -22,7 +22,7 @@ func InfoCommand(app *app.App) *cobra.Command {
 				return
 			}
 
-			fmt.Printf("Target info\n%s", targetInfo)
+			fmt.Printf("Target info\n%s\n", targetInfo)
 		},
 	}
 

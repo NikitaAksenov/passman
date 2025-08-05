@@ -23,9 +23,9 @@ func DeleteCommand(app *app.App) *cobra.Command {
 			}
 
 			if rowsAffected == 0 {
-				fmt.Printf("Failed to find target %s", target)
+				fmt.Printf("Failed to find target [%s]\n", target)
 			} else {
-				fmt.Printf("Successfully deleted target %s", target)
+				fmt.Printf("Successfully deleted target [%s]\n", target)
 			}
 		},
 	}

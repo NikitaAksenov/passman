@@ -102,9 +102,9 @@ func UpdateCommand(app *app.App) *cobra.Command {
 
 			// Check if target was updated
 			if rowsAffected == 0 {
-				fmt.Printf("Failed to find target %s to update", target)
+				fmt.Printf("Failed to find target [%s]\n", target)
 			} else {
-				fmt.Printf("Successfully updated target %s", target)
+				fmt.Printf("Successfully updated target [%s]\n", target)
 			}
 		},
 	}

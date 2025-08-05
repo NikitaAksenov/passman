@@ -13,7 +13,7 @@ import (
 
 func AddCommand(app *app.App) *cobra.Command {
 	command := cobra.Command{
-		Use:   "add [target]",
+		Use:   "add target",
 		Short: "Adds new target and it's password",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -98,6 +98,8 @@ func AddCommand(app *app.App) *cobra.Command {
 				fmt.Printf("adding to storage failed: %s", err.Error())
 				return
 			}
+
+			fmt.Printf("Added password for target [%s]\n", target)
 		},
 	}
 
