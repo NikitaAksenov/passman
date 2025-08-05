@@ -8,6 +8,7 @@ import (
 	"github.com/NikitaAksenov/passman/internal/directory"
 	"github.com/NikitaAksenov/passman/internal/storage"
 	"github.com/NikitaAksenov/passman/internal/storage/sqlite"
+	"golang.design/x/clipboard"
 )
 
 var appConfiguration = "dev"
@@ -47,6 +48,12 @@ func New() (*App, error) {
 	storage, err = sqlite.New(storagePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init storage: %s", err.Error())
+	}
+
+	// Init clipboard
+	err = clipboard.Init()
+	if err != nil {
+		return nil, fmt.Errorf("failed to init clipboard: %s", err.Error())
 	}
 
 	return &App{

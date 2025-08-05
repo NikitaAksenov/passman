@@ -7,16 +7,23 @@ import (
 	"github.com/NikitaAksenov/passman/cmd/passman-cli/app"
 	"github.com/NikitaAksenov/passman/internal/encrypt"
 	"github.com/spf13/cobra"
+	"golang.design/x/clipboard"
 	"golang.org/x/term"
 )
 
 func GetCommand(app *app.App) *cobra.Command {
 	command := cobra.Command{
-		Use:   "get [target]",
-		Short: "Returns [target]'s password",
+		Use:   "get target",
+		Short: "Sends target's password to the clipboard",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			target := args[0]
+
+			showFlag, err := cmd.Flags().GetBool("show")
+			if err != nil {
+				fmt.Println("failed to get \"show\" flag value")
+				return
+			}
 
 			// Read key silently
 			fmt.Print("Enter key: ")
@@ -44,9 +51,17 @@ func GetCommand(app *app.App) *cobra.Command {
 				return
 			}
 
-			fmt.Println("Password:", pass)
+			// Send password to clipboard
+			clipboard.Write(clipboard.FmtText, []byte(pass))
+			fmt.Println("Password copied to clipboard")
+
+			if showFlag {
+				fmt.Println("Password:", pass)
+			}
 		},
 	}
+
+	command.Flags().BoolP("show", "s", false, "if set then password will be shown in the terminal")
 
 	return &command
 }
