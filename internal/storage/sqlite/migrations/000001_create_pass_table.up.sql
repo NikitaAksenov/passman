@@ -1,0 +1,5 @@
+CREATE TABLE pass(
+    id INTEGER PRIMARY KEY,
+    target TEXT NOT NULL UNIQUE,
+    pass TEXT NOT NULL
+);

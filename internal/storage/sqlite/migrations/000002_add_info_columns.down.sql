@@ -1,0 +1,3 @@
+ALTER TABLE pass DROP COLUMN created;
+ALTER TABLE pass DROP COLUMN lastUpdate;
+ALTER TABLE pass DROP COLUMN lastRead;

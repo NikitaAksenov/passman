@@ -7,38 +7,40 @@ import (
 	"time"
 
 	"github.com/NikitaAksenov/passman/internal/storage"
-	"github.com/mattn/go-sqlite3"
+	"github.com/golang-migrate/migrate/v4"
+	migrate_sqlite "github.com/golang-migrate/migrate/v4/database/sqlite3"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
 type SqliteStorage struct {
 	db *sql.DB
+	m  *migrate.Migrate
 }
 
 func New(storagePath string) (*SqliteStorage, error) {
 	db, err := sql.Open("sqlite3", storagePath)
 	if err != nil {
-		return nil, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("failed to open db: %w", err)
 	}
 
-	stmt, err := db.Prepare(`
-	CREATE TABLE IF NOT EXISTS pass(
-		id INTEGER PRIMARY KEY,
-		target TEXT NOT NULL UNIQUE,
-		pass TEXT NOT NULL,
-		created TEXT NOT NULL,
-		lastUpdate TEXT,
-		lastRead TEXT);
-	`)
+	driver, err := migrate_sqlite.WithInstance(db, &migrate_sqlite.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("failed to get db driver: %w", err)
 	}
 
-	_, err = stmt.Exec()
+	m, err := migrate.NewWithDatabaseInstance("file://./internal/storage/sqlite/migrations", "sqlite3", driver)
 	if err != nil {
-		return nil, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("failed to get db migrate instance: %w", err)
 	}
 
-	return &SqliteStorage{db: db}, nil
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return nil, fmt.Errorf("failed to migrate db up: %w", err)
+	}
+
+	return &SqliteStorage{
+		db: db,
+		m:  m}, nil
 }
 
 func (s *SqliteStorage) AddPass(target string, pass string) (int64, error) {
