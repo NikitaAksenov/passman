@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
 	"time"
@@ -10,8 +11,12 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	migrate_sqlite "github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
+
+//go:embed migrations/*.sql
+var migrationsDir embed.FS
 
 type SqliteStorage struct {
 	db *sql.DB
@@ -24,12 +29,17 @@ func New(storagePath string) (*SqliteStorage, error) {
 		return nil, fmt.Errorf("failed to open db: %w", err)
 	}
 
-	driver, err := migrate_sqlite.WithInstance(db, &migrate_sqlite.Config{})
+	sourceDriver, err := iofs.New(migrationsDir, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open migrations dir: %w", err)
+	}
+
+	databaseDriver, err := migrate_sqlite.WithInstance(db, &migrate_sqlite.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db driver: %w", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance("file://./internal/storage/sqlite/migrations", "sqlite3", driver)
+	m, err := migrate.NewWithInstance("main", sourceDriver, "sqlite", databaseDriver)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db migrate instance: %w", err)
 	}
