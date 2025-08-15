@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func InfoCommand(app *app.App) *cobra.Command {
+func InfoCommand(app *app.CliApp) *cobra.Command {
 	command := cobra.Command{
 		Use:   "info target",
 		Short: "Returns info about entry",
