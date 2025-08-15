@@ -11,7 +11,7 @@ import (
 	"golang.org/x/term"
 )
 
-func UpdateCommand(app *app.App) *cobra.Command {
+func UpdateCommand(app *app.CliApp) *cobra.Command {
 	command := cobra.Command{
 		Use:     "update target",
 		Aliases: []string{"upd"},

@@ -11,7 +11,7 @@ import (
 	"golang.org/x/term"
 )
 
-func GetCommand(app *app.App) *cobra.Command {
+func GetCommand(app *app.CliApp) *cobra.Command {
 	command := cobra.Command{
 		Use:   "get target",
 		Short: "Sends target's password to the clipboard",

@@ -11,7 +11,7 @@ import (
 	"golang.org/x/term"
 )
 
-func AddCommand(app *app.App) *cobra.Command {
+func AddCommand(app *app.CliApp) *cobra.Command {
 	command := cobra.Command{
 		Use:   "add target",
 		Short: "Adds new target and it's password",

@@ -4,8 +4,8 @@
 set -e
 
 # Run go build
-echo "Building Go project..."
-go build -ldflags="-X 'github.com/NikitaAksenov/passman/cmd/passman-cli/app.appConfiguration=prod'" -o passman.exe ./cmd/passman-cli
+echo "Building passman-cli..."
+go build -ldflags="-X 'github.com/NikitaAksenov/passman/internal/app.appConfiguration=prod'" -o passman.exe ./cmd/passman-cli
 
 # Get the name of the binary (assumes current directory is the project root)
 BINARY_NAME=$(basename "$PWD")

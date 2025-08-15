@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func ListCommand(app *app.App) *cobra.Command {
+func ListCommand(app *app.CliApp) *cobra.Command {
 	command := cobra.Command{
 		Use:   "list",
 		Short: "Lists existing targets",

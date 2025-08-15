@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func DeleteCommand(app *app.App) *cobra.Command {
+func DeleteCommand(app *app.CliApp) *cobra.Command {
 	command := cobra.Command{
 		Use:     "delete target",
 		Short:   "Deletes entry for provided target",
