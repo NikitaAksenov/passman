@@ -13,85 +13,163 @@ import (
 
 type desktopApp struct {
 	PassmanApp *passman_app.App
-	FyneApp    *fyne.App
+	FyneApp    fyne.App
 
 	key string
+
+	mainWindow     fyne.Window
+	keyEnterWindow fyne.Window
+}
+
+func New() (*desktopApp, error) {
+	pApp, err := passman_app.New()
+	if err != nil {
+		return nil, err
+	}
+
+	fApp := app.New()
+
+	return &desktopApp{
+		PassmanApp: pApp,
+		FyneApp:    fApp,
+	}, nil
+}
+
+func (da *desktopApp) InitWindows() {
+	da.mainWindow = da.NewMainWindow()
+	da.keyEnterWindow = da.NewKeyEnteredWindow()
+}
+
+func (da *desktopApp) NewMainWindow() fyne.Window {
+	mainWindow := da.FyneApp.NewWindow("passman")
+
+	entries := make([]string, 0)
+
+	mainWindow.SetMaster()
+	mainWindow.Resize(fyne.NewSize(400.0, 600.0))
+	mainWindow.SetFixedSize(true)
+	mainWindow_EntryList := widget.NewList(
+		func() int {
+			return len(entries)
+		},
+		func() fyne.CanvasObject {
+			return NewEntryLabel("none")
+		},
+		func(lii widget.ListItemID, co fyne.CanvasObject) {
+			entryContainer := co.(*fyne.Container)
+			label := entryContainer.Objects[0].(*widget.Label)
+			buttons := entryContainer.Objects[1].(*fyne.Container)
+			copyButton := buttons.Objects[0].(*widget.Button)
+			deleteButton := buttons.Objects[1].(*widget.Button)
+			label.SetText(entries[lii])
+			copyButton.OnTapped = func() {
+				fmt.Println("Copy", entries[lii])
+			}
+			deleteButton.OnTapped = func() {
+				entries = append(entries[:lii], entries[lii+1:]...)
+				mainWindow.Canvas().Content().Refresh()
+			}
+		},
+	)
+	mainWindow_AddEntryButton := widget.NewButton("Add entry", func() {
+		addEntryWindow := da.FyneApp.NewWindow("New entry")
+
+		addEntryWindow.Resize(fyne.NewSize(300.0, 150.0))
+		addEntryWindow_Entry := widget.NewEntry()
+		addEntryWindow_Entry.PlaceHolder = "Target"
+		addEntryWindow_FirstPass := widget.NewEntry()
+		addEntryWindow_FirstPass.Password = true
+		addEntryWindow_FirstPass.PlaceHolder = "Enter password..."
+		addEntryWindow_SecondPass := widget.NewEntry()
+		addEntryWindow_SecondPass.Password = true
+		addEntryWindow_SecondPass.PlaceHolder = "Re-enter password..."
+		addEntryWindow_EnterButton := widget.NewButton("Enter", func() {
+			if addEntryWindow_FirstPass.Text != addEntryWindow_SecondPass.Text {
+				fmt.Println("Pass's must match")
+				return
+			}
+
+			entries = append(entries, addEntryWindow_Entry.Text)
+
+			addEntryWindow.Close()
+
+			mainWindow.RequestFocus()
+			mainWindow.Canvas().Content().Refresh()
+		})
+		addEntryWindow_EnterButton.Disable()
+		addEntryWindow_Entry.OnChanged = func(s string) {
+			addEntryWindow_EnterButton.Disable()
+
+			if len(s) > 0 {
+				addEntryWindow_EnterButton.Enable()
+			}
+		}
+		addEntryWindow.SetContent(container.NewBorder(
+			nil, addEntryWindow_EnterButton, nil, nil, container.NewVBox(addEntryWindow_Entry, addEntryWindow_FirstPass, addEntryWindow_SecondPass),
+		))
+
+		addEntryWindow.Show()
+	})
+	mainWindow.SetContent(container.NewBorder(
+		nil, mainWindow_AddEntryButton, nil, nil, mainWindow_EntryList,
+	))
+
+	return mainWindow
+}
+
+func (da *desktopApp) NewKeyEnteredWindow() fyne.Window {
+	keyEnterWindow := da.FyneApp.NewWindow("Enter key")
+
+	keyEnterWindow.Resize(fyne.NewSize(300.0, 50.0))
+
+	keyEnterWindow_Entry := widget.NewEntry()
+	keyEnterWindow_EnterButton := widget.NewButton("Enter key", func() {
+		da.key = keyEnterWindow_Entry.Text
+
+		da.mainWindow.Show()
+		keyEnterWindow.Close()
+	})
+
+	keyEnterWindow_Entry.Password = true
+	keyEnterWindow_Entry.OnChanged = func(s string) {
+		keyEnterWindow_EnterButton.Disable()
+
+		if len(s) > 2 {
+			keyEnterWindow_EnterButton.Enable()
+		}
+	}
+
+	keyEnterWindow_EnterButton.Disable()
+
+	keyEnterWindow.SetContent(container.NewBorder(
+		nil, nil, nil, keyEnterWindow_EnterButton, keyEnterWindow_Entry,
+	))
+
+	return keyEnterWindow
+}
+
+func (da *desktopApp) Run() {
+	da.keyEnterWindow.Show()
+	da.FyneApp.Run()
+}
+
+func NewEntryLabel(text string) *fyne.Container {
+	entry := widget.NewLabel(text)
+	copyButton := widget.NewButton("Copy", func() {})
+	deleteButton := widget.NewButton("Delete", func() {})
+
+	return container.NewBorder(
+		nil, nil, nil, container.NewHBox(copyButton, deleteButton), entry,
+	)
 }
 
 func main() {
-	var dApp desktopApp
-	pApp, _ := passman_app.New()
-	fApp := app.New()
-	dApp.PassmanApp = pApp
-	dApp.FyneApp = &fApp
-
-	mainWindow := fApp.NewWindow("passman")
-	mainWindow.Resize(fyne.NewSize(500.0, 500.0))
-	mainWindow.SetMaster()
-
-	newEntryWindow := fApp.NewWindow("Add")
-	newEntryWindow.Resize(fyne.NewSize(300.0, 150.0))
-	newEntryTarget := widget.NewEntry()
-	newEntryTarget.PlaceHolder = "Target"
-	newEntryFirstPassword := widget.NewEntry()
-	newEntryFirstPassword.PlaceHolder = "Enter password..."
-	newEntryFirstPassword.Password = true
-	newEntrySecondPassword := widget.NewEntry()
-	newEntrySecondPassword.PlaceHolder = "Re-enter password..."
-	newEntrySecondPassword.Password = true
-	newEntryFields := container.NewVBox(newEntryTarget, newEntryFirstPassword, newEntrySecondPassword)
-	newEntryButton := widget.NewButton("Add entry", func() {
-		fmt.Println("Add entry clicked")
-	})
-	newEntryContainer := container.NewBorder(
-		nil, newEntryButton, nil, nil, newEntryFields,
-	)
-	newEntryWindow.SetContent(newEntryContainer)
-
-	addEntryButton := widget.NewButton("Add", func() {
-		newEntryWindow.Show()
-	})
-
-	enterKeyWindow := fApp.NewWindow("Enter key")
-	enterKeyWindow.Resize(fyne.NewSize(300.0, 50.0))
-	enterKeyEntry := widget.NewEntry()
-	enterKeyButton := widget.NewButton("Enter", func() {
-		dApp.key = enterKeyEntry.Text
-
-		entries, _ := pApp.Storage.GetTargets(20, 0)
-		entryList := widget.NewList(
-			func() int {
-				return len(entries)
-			},
-			func() fyne.CanvasObject {
-				return widget.NewLabel("template")
-			},
-			func(lii widget.ListItemID, co fyne.CanvasObject) {
-				entryLabel := co.(*widget.Label)
-				entryLabel.SetText(entries[lii])
-			},
-		)
-
-		mainContainer := container.NewBorder(
-			nil, addEntryButton, nil, nil, entryList,
-		)
-		mainWindow.SetContent(mainContainer)
-
-		mainWindow.Show()
-		enterKeyWindow.Close()
-	})
-	enterKeyButton.Disable()
-	enterKeyEntry.Password = true
-	enterKeyEntry.OnChanged = func(s string) {
-		enterKeyButton.Disable()
-		if len(s) > 2 {
-			enterKeyButton.Enable()
-		}
+	da, err := New()
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	enterKeyContainer := container.NewBorder(
-		nil, nil, nil, enterKeyButton, enterKeyEntry,
-	)
-	enterKeyWindow.SetContent(enterKeyContainer)
 
-	enterKeyWindow.ShowAndRun()
+	da.InitWindows()
+	da.Run()
 }
