@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/NikitaAksenov/passman/internal/directory"
+	"github.com/NikitaAksenov/passman/internal/encrypt"
 	"github.com/NikitaAksenov/passman/internal/storage"
 	"github.com/NikitaAksenov/passman/internal/storage/sqlite"
 	"golang.design/x/clipboard"
@@ -82,4 +83,27 @@ func GetAppDir(configuration string) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown configuration %s", configuration)
 	}
+}
+
+func (a *App) GetPassword(target string, key string) (string, error) {
+	// Resize key to 16 bytes
+	resizedKey := encrypt.ResizeKey([]byte(key))
+
+	// Get encrypted password from storage
+	encryptedPass, err := a.Storage.GetPass(target)
+	if err != nil {
+		return "", fmt.Errorf("getting from storage failed: %s", err.Error())
+	}
+
+	// Decrypt password
+	pass, err := encrypt.DecryptString(resizedKey, encryptedPass)
+	if err != nil {
+		return "", fmt.Errorf("decryption failed: %s", err.Error())
+	}
+
+	return pass, nil
+}
+
+func (a *App) SendToClipboard(s string) {
+	clipboard.Write(clipboard.FmtText, []byte(s))
 }

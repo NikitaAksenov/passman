@@ -89,7 +89,9 @@ func (da *desktopApp) NewMainWindow() fyne.Window {
 			deleteButton := buttons.Objects[1].(*widget.Button)
 			label.SetText(da.entries[lii].target)
 			copyButton.OnTapped = func() {
-				fmt.Println("Copy", da.entries[lii])
+				target := da.entries[lii].target
+				pass, _ := da.PassmanApp.GetPassword(target, da.key)
+				da.PassmanApp.SendToClipboard(pass)
 			}
 			deleteButton.OnTapped = func() {
 				target := label.Text
