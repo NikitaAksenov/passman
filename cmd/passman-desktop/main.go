@@ -62,7 +62,7 @@ func (da *desktopApp) UpdateEntries() error {
 
 func (da *desktopApp) InitWindows() {
 	da.mainWindow = da.NewMainWindow()
-	da.keyEnterWindow = da.NewKeyEnteredWindow()
+	//da.keyEnterWindow = da.NewKeyEnteredWindow()
 }
 
 func (da *desktopApp) NewMainWindow() fyne.Window {
@@ -114,11 +114,31 @@ func (da *desktopApp) NewMainWindow() fyne.Window {
 		addEntryWindow.Show()
 	})
 
+	mainWindow_EnterKeyContainer := da.NewEnterKeyContainer()
+
 	mainWindow.SetContent(container.NewBorder(
-		nil, mainWindow_AddEntryButton, nil, nil, mainWindow_EntryList,
+		mainWindow_EnterKeyContainer, mainWindow_AddEntryButton, nil, nil, mainWindow_EntryList,
 	))
 
 	return mainWindow
+}
+
+func (da *desktopApp) NewEnterKeyContainer() *fyne.Container {
+	enterKeyEntry := widget.NewEntry()
+	enterKeyEntry.Password = true
+	enterKeyEntry.PlaceHolder = "Enter key..."
+	enterKeyEntry.OnChanged = func(s string) {
+		da.key = enterKeyEntry.Text
+	}
+
+	entryKeyContainer := container.NewBorder(
+		nil, nil,
+		widget.NewLabel("Key:"),
+		nil,
+		enterKeyEntry,
+	)
+
+	return entryKeyContainer
 }
 
 func (da *desktopApp) NewAddEntryWindow() fyne.Window {
@@ -213,7 +233,7 @@ func (da *desktopApp) NewKeyEnteredWindow() fyne.Window {
 }
 
 func (da *desktopApp) Run() {
-	da.keyEnterWindow.Show()
+	da.mainWindow.Show()
 	da.FyneApp.Run()
 }
 
