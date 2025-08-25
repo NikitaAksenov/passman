@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/NikitaAksenov/passgen/pkg/passgen"
 	"github.com/NikitaAksenov/passman/internal/encrypt"
 )
 
@@ -14,6 +15,7 @@ func (da *desktopApp) NewAddEntryWindow() fyne.Window {
 	addEntryWindow := da.FyneApp.NewWindow("New entry")
 
 	addEntryWindow.Resize(fyne.NewSize(300.0, 150.0))
+	addEntryWindow.SetFixedSize(true)
 
 	addEntryWindow_Entry := widget.NewEntry()
 	addEntryWindow_Entry.PlaceHolder = "Target"
@@ -87,8 +89,20 @@ func (da *desktopApp) NewAddEntryWindow() fyne.Window {
 	addEntryWindow_FirstPass.OnChanged = enterButtonValidate
 	addEntryWindow_SecondPass.OnChanged = enterButtonValidate
 
+	addEntryWindow_GenerateButton := widget.NewButton("Generate", func() {
+		// Generate password
+		generatedPassword, _ := passgen.Generate(10)
+
+		addEntryWindow_FirstPass.SetText(generatedPassword)
+		addEntryWindow_SecondPass.SetText(generatedPassword)
+	})
+
+	passwordsContainer := container.NewBorder(
+		nil, nil, nil, addEntryWindow_GenerateButton, container.NewVBox(addEntryWindow_FirstPass, addEntryWindow_SecondPass),
+	)
+
 	addEntryWindow.SetContent(container.NewBorder(
-		nil, addEntryWindow_EnterButton, nil, nil, container.NewVBox(addEntryWindow_Entry, addEntryWindow_FirstPass, addEntryWindow_SecondPass),
+		nil, addEntryWindow_EnterButton, nil, nil, container.NewVBox(addEntryWindow_Entry, passwordsContainer),
 	))
 
 	return addEntryWindow
