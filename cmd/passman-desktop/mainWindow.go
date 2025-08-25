@@ -26,18 +26,43 @@ func (da *desktopApp) NewMainWindow() fyne.Window {
 		},
 		func(lii widget.ListItemID, co fyne.CanvasObject) {
 			entryContainer := co.(*fyne.Container)
+
 			label := entryContainer.Objects[0].(*widget.Label)
+
 			buttons := entryContainer.Objects[1].(*fyne.Container)
-			copyButton := buttons.Objects[0].(*widget.Button)
-			deleteButton := buttons.Objects[1].(*widget.Button)
-			label.SetText(da.entries[lii].target)
+			showButton := buttons.Objects[0].(*widget.Button)
+			copyButton := buttons.Objects[1].(*widget.Button)
+			deleteButton := buttons.Objects[2].(*widget.Button)
+
+			// for i, button := range buttons.Objects {
+			// 	fmt.Println(i, button.(*widget.Button).Text)
+			// }
+
+			target := da.entries[lii].target
+
+			label.SetText(target)
+			showButton.SetText("Show")
+
+			showButton.OnTapped = func() {
+				switch showButton.Text {
+				case "Show":
+					showButton.SetText("Hide")
+
+					pass, _ := da.PassmanApp.GetPassword(target, da.key)
+					label.SetText(pass)
+				case "Hide":
+					showButton.SetText("Show")
+
+					label.SetText(da.entries[lii].target)
+				}
+			}
+
 			copyButton.OnTapped = func() {
-				target := da.entries[lii].target
 				pass, _ := da.PassmanApp.GetPassword(target, da.key)
 				da.PassmanApp.SendToClipboard(pass)
 			}
+
 			deleteButton.OnTapped = func() {
-				target := label.Text
 				_, err := da.PassmanApp.Storage.DeleteTarget(target)
 				if err != nil {
 					fmt.Println(err)
@@ -101,10 +126,11 @@ func (da *desktopApp) UpdateEntries() error {
 
 func NewEntryLabel(text string) *fyne.Container {
 	entry := widget.NewLabel(text)
+	showButton := widget.NewButton("Show", func() {})
 	copyButton := widget.NewButton("Copy", func() {})
 	deleteButton := widget.NewButton("Delete", func() {})
 
 	return container.NewBorder(
-		nil, nil, nil, container.NewHBox(copyButton, deleteButton), entry,
+		nil, nil, nil, container.NewHBox(showButton, copyButton, deleteButton), entry,
 	)
 }
