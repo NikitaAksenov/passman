@@ -79,6 +79,8 @@ func (da *desktopApp) NewMainWindow() fyne.Window {
 	mainWindow_AddEntryButton := widget.NewButton("Add entry", func() {
 		addEntryWindow := da.NewAddEntryWindow()
 
+		mainWindow.Hide()
+
 		addEntryWindow.Show()
 	})
 

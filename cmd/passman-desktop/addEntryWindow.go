@@ -54,12 +54,7 @@ func (da *desktopApp) NewAddEntryWindow() fyne.Window {
 			return
 		}
 
-		da.UpdateEntries()
-
 		addEntryWindow.Close()
-
-		da.mainWindow.RequestFocus()
-		da.mainWindow.Canvas().Content().Refresh()
 	})
 	addEntryWindow_EnterButton.Disable()
 
@@ -104,6 +99,14 @@ func (da *desktopApp) NewAddEntryWindow() fyne.Window {
 	addEntryWindow.SetContent(container.NewBorder(
 		nil, addEntryWindow_EnterButton, nil, nil, container.NewVBox(addEntryWindow_Entry, passwordsContainer),
 	))
+
+	addEntryWindow.SetOnClosed(func() {
+		da.UpdateEntries()
+
+		da.mainWindow.Show()
+		da.mainWindow.RequestFocus()
+		da.mainWindow.Canvas().Content().Refresh()
+	})
 
 	return addEntryWindow
 }
